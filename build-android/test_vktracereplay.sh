@@ -2,21 +2,11 @@
 
 #set -v
 
-if [ -t 1 ] ; then
-    RED='\033[0;31m'
-    GREEN='\033[0;32m'
-    NC='\033[0m' # No Color
-else
-    RED=''
-    GREEN=''
-    NC=''
-fi
-
 adb root
 adb shell rm -rf /data/local/debug/vulkan
 adb shell mkdir -p /data/local/debug/vulkan
 adb push libs/arm64-v8a/libVkLayer_vktrace_layer.so /data/local/debug/vulkan/
-adb push libs/arm64-v8a/libVkLayer_screenshot.so /data/local/debug/vulkan
+adb push libs/arm64-v8a/libVkLayer_screenshot.so /data/local/debug/vulkan/
 
 # build and install Cube with INTERNET permission
 
@@ -33,6 +23,7 @@ adb reverse tcp:34201 tcp:34201
 
 # vktrace layer
 adb shell am start com.example.Cube/android.app.NativeActivity
+# hack hack hack - this should wait until the screenshot arrives, or until a timeout
 sleep 10
 kill $!
 adb shell am force-stop com.example.Cube
@@ -43,6 +34,7 @@ adb pull /sdcard/Android/1.ppm cube.ppm
 adb shell mv /sdcard/Android/1.ppm /sdcard/Android/cube.ppm
 
 # vkreplay
+android update project -s -p . -t "android-23"
 ant -buildfile vkreplay debug
 adb uninstall com.example.vkreplay
 adb install ./vkreplay/bin/NativeActivity-debug.apk
@@ -53,11 +45,26 @@ adb shell setprop debug.vulkan.layer.2 '""'
 adb shell pm grant com.example.vkreplay android.permission.READ_EXTERNAL_STORAGE
 adb shell pm grant com.example.vkreplay android.permission.WRITE_EXTERNAL_STORAGE
 
-adb shell am start -a android.intent.action.MAIN -c android-intent.category.LAUNCH -n com.example.vkreplay/android.app.NativeActivity --es args "-v\ debug\ -t\ /sdcard/cube0.vktrace"
+adb shell am start -a android.intent.action.MAIN -c android-intent.category.LAUNCH -n com.example.vkreplay/android.app.NativeActivity --es args "-v\ full\ -t\ /sdcard/cube0.vktrace"
 
 # grab the screenshot
+# hack hack hack - this should wait until the screenshot arrives, or until a timeout
 sleep 10
 adb pull /sdcard/Android/1.ppm vkreplay.ppm
+
+adb shell am force-stop com.example.vkreplay
+
+# the rest is a quick port from vktracereplay.sh
+
+if [ -t 1 ] ; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    NC='\033[0m' # No Color
+else
+    RED=''
+    GREEN=''
+    NC=''
+fi
 
 cmp -s cube.ppm vkreplay.ppm
 
