@@ -520,7 +520,7 @@ void android_main(struct android_app *app)
                 __android_log_print(ANDROID_LOG_INFO, appTag, "argv[%i] = %s", i, argv[i]);
 
             // sleep to allow attaching debugger
-            sleep(10);
+            //sleep(10);
 
             // Call into common code
             int err = vkreplay_main(argc, argv, app->window);
