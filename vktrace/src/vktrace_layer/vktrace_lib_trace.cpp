@@ -707,8 +707,10 @@ VKTRACER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL __HOOKED_vkCreateInstance(
     memcpy(&localCreateInfo, pCreateInfo, sizeof(localCreateInfo));
 
     // Alloc space to copy pointers
-    localCreateInfo.ppEnabledLayerNames = (const char* const*) malloc(localCreateInfo.enabledLayerCount * sizeof(char*));
-    localCreateInfo.ppEnabledExtensionNames = (const char* const*) malloc(localCreateInfo.enabledExtensionCount * sizeof(char*));
+    if (localCreateInfo.enabledLayerCount > 0)
+        localCreateInfo.ppEnabledLayerNames = (const char* const*) malloc(localCreateInfo.enabledLayerCount * sizeof(char*));
+    if (localCreateInfo.enabledExtensionCount > 0)
+        localCreateInfo.ppEnabledExtensionNames = (const char* const*) malloc(localCreateInfo.enabledExtensionCount * sizeof(char*));
 
     for (i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
         char **ppName = (char **) &localCreateInfo.ppEnabledExtensionNames[i];
@@ -745,8 +747,10 @@ VKTRACER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL __HOOKED_vkCreateInstance(
     vktrace_finalize_buffer_address(pHeader, (void**)&(pPacket->pInstance));
     FINISH_TRACE_PACKET();
 
-    free((void *)localCreateInfo.ppEnabledExtensionNames);
-    free((void *)localCreateInfo.ppEnabledLayerNames);
+    if (localCreateInfo.enabledLayerCount > 0)
+        free((void *)localCreateInfo.ppEnabledExtensionNames);
+    if (localCreateInfo.enabledExtensionCount > 0)
+        free((void *)localCreateInfo.ppEnabledLayerNames);
 
     return result;
 }
